@@ -51,11 +51,17 @@ Viper 使用以下优先顺序。每个项优先级高于下面的项:
 
 **重要提示:** Viper 配置keys不区分大小写。目前正在讨论将其设置为可选的。
 
-### Example
+### Example 
+
+> 备注：可以对例子进行扩展；
 
 [往viper中赋值](https://github.com/spf13/viper#putting-values-into-viper)
 
 [从viper中获取值](https://github.com/spf13/viper#getting-values-from-viper)
+
+### 源码分析
+
+> 备注：可以对部分源码进行分析
 
 ### Doc
 
@@ -68,6 +74,8 @@ https://github.com/spf13/viper/blob/master/README.md
 Viper是被设计成 [Cobra](https://github.com/spf13/cobra)的伴侣。虽然两者都可以完全独立地运行，但它们构成了一个强大的组合，可以处理很多应用程序基础需求。
 
 ### 比较
+
+> 备注： 可以到https://go.libhunt.com/这个网站进行库对比或者链接到其他博客网站
 
 [viper VS ini](https://go.libhunt.com/compare-viper-vs-ini)
 
