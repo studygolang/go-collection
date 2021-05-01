@@ -1,6 +1,10 @@
 
 ### slice
 
+#### 源码
+
+-  [slice.go](https://sourcegraph.com/github.com/golang/go/-/blob/src/runtime/slice.go)
+
 #### 深度解析
 
 
