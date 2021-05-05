@@ -1,4 +1,4 @@
-# go-cache 
+# go-cache
 
 ## [go-cache ](https://github.com/patrickmn/go-cache)
 
@@ -19,7 +19,7 @@
 
 可以存储任何对象（在给定的持续时间内或永久存储），并且可以由多个goroutine安全地使用缓存。
 
-### Example 
+### Example
 
 ```golang
 package main
@@ -148,7 +148,7 @@ func (c *cache) Get(k string) (interface{}, bool) {
 		c.mu.RUnlock()
 		return nil, false
 	}
-	if item.Expiration > 0 { 
+	if item.Expiration > 0 {
 		if time.Now().UnixNano() > item.Expiration { // 已经过期，直接返回nil，为什么在这里不直接就删除了呢？
 			c.mu.RUnlock()
 			return nil, false
@@ -195,7 +195,7 @@ func newCacheWithJanitor(de time.Duration, ci time.Duration, m map[string]Item) 
 	C := &Cache{c}
 	if ci > 0 {
 		runJanitor(c, ci) // 定时运行清除过期KEY
- 		runtime.SetFinalizer(C, stopJanitor) // 当C被GC回收时，会停止runJanitor 中的协程
+		runtime.SetFinalizer(C, stopJanitor) // 当C被GC回收时，会停止runJanitor 中的协程
 	}
 	return C
 }
@@ -210,7 +210,7 @@ func runJanitor(c *cache, ci time.Duration) {
 }
 
 func (j *janitor) Run(c *cache) {
-	ticker := time.NewTicker(j.Interval) 
+	ticker := time.NewTicker(j.Interval)
 	for {
 		select {
 		case <-ticker.C: // 每到一个周期就全部遍历一次
@@ -248,13 +248,20 @@ func (c *cache) DeleteExpired() {
 
 #### Lock 的使用
 
-在go-cache中，涉及到读写cache，基本上都用到了锁，而且在遍历的时候也用到锁，当cache的数量非常多时，读写频繁时，
-会有严重的锁冲突。
+* 在go-cache中，涉及到读写cache，基本上都用到了锁，而且在遍历的时候也用到锁，当cache的数量非常多时，读写频繁时，
+  会有严重的锁冲突。
 
 ##### 使用读写锁？
-##### 使用defer？
+
+* sync.RWMutex, 在读的时候加RLock, 可以允许多个读。在写的时候加Lock，不允许其他读和写。
+
 ##### 锁的粒度是否可以变更小？
-##### 使用sync.map? 减少锁的使用
+
+* 根据KEY HASH 到不同的map中
+
+##### 使用sync.map?
+
+* 减少锁的使用
 
 #### runtime.SetFinalizer
 
@@ -271,15 +278,9 @@ golang提供了runtime.SetFinalizer函数，当GC准备释放对象时，会回�
 
 http://godoc.org/github.com/patrickmn/go-cache
 
-### QA
-
-大量key的情况下会造成锁竞争严重
-
 ### 比较
 
-> 备注： 可以到https://go.libhunt.com/这个网站进行库对比或者链接到其他博客网站
-
-### 相似的库
+#### 相似的库
 
 * https://github.com/golang/groupcache
 * https://github.com/allegro/bigcache
