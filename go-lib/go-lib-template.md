@@ -75,7 +75,7 @@ Viper是被设计成 [Cobra](https://github.com/spf13/cobra)的伴侣。虽然�
 
 ### 比较
 
-> 备注： 可以到https://go.libhunt.com/这个网站进行库对比或者链接到其他博客网站
+> 备注： 可以到https://go.libhunt.com/ 这个网站进行库对比或者链接到其他博客网站
 
 [viper VS ini](https://go.libhunt.com/compare-viper-vs-ini)
 
