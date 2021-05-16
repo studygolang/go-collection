@@ -114,7 +114,7 @@ type entryHdr struct {
 }
 ```
 
-* 可以看到freecache将实际存储数据结构设计为数组，有segmentCount个读写锁 减小了锁的粒度，这样就大大降低了资源争抢
+* 可以看到freecache将实际存储数据结构设计为数组，有segmentCount即256个segment和互斥锁，这样锁的粒度就相对较小，从而减小了资源竞争。
 * freecache 减少了指针的使用，所以freecache的对GC开销几乎为零。
 
 
@@ -125,16 +125,16 @@ type entryHdr struct {
 
 ### 流程分析
 
-流程分析只是分析了了Set和淘汰算法的实现
+流程分析只分析了了Set和淘汰算法的实现
 
 #### Set
 
-1. Set数据是会先计算出Key对应的hash值，这个数据在后面计算segID和slotId会使用到
+1. Set数据是会先计算出Key对应的hash值，这个数据会在后面计算segID和slotId使用到
 2. 做一些数据合法的判断
 3. 根据slotId找到slot
-4. 根据slot和hash16获取到在KEY在slot中的index
-5. 拿到index之后在cache中的RingBuf中查找数据
-6. 找到的时候需要根据新旧两个数据长度判断是否需要扩容
+4. 根据slot和hash16获取到在Key在slot中的index
+5. 拿到index之后在cache的RingBuf中查找数据
+6. 找到的时候则需要根据新旧两个数据长度判断是否需要扩容
 7. 没有找到则直接写入新的数据
    ![img_2.png](img/freecache_img_2.png)
 
