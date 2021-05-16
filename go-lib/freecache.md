@@ -147,14 +147,14 @@ freecache的过期删除并不是有一个后台协程去删除，而是在Get�
 
 ```golang
 package freecache
-    // 发现是过期直接就返回ErrNotFound
-    if hdr.expireAt != 0 && hdr.expireAt <= now {
-			seg.delEntryPtr(slotId, slot, idx)
-			atomic.AddInt64(&seg.totalExpired, 1)
-			err = ErrNotFound
-			atomic.AddInt64(&seg.missCount, 1)
-			return
-    }
+// 发现是过期直接就返回ErrNotFound
+if hdr.expireAt != 0 && hdr.expireAt <= now {
+		seg.delEntryPtr(slotId, slot, idx)
+		atomic.AddInt64(&seg.totalExpired, 1)
+		err = ErrNotFound
+		atomic.AddInt64(&seg.missCount, 1)
+		return
+}
 ```
 
 #### **接近LRU**的淘汰算法
