@@ -136,6 +136,7 @@ type entryHdr struct {
 5. 拿到index之后在cache的RingBuf中查找数据
 6. 找到的时候则需要根据新旧两个数据长度判断是否需要扩容
 7. 没有找到则直接写入新的数据
+
    ![img_2.png](img/freecache_img_2.png)
 
 #### 淘汰算法的实现
