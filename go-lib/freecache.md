@@ -1,16 +1,16 @@
-# freecache
+# [freecache][1]
 
-## [freecache][1]
-
-### 一句话描述
+## 一句话描述
 
 Go缓存库，具有零GC开销和高并发性能
 
-### 简介
+## 简介
 
-#### freecache是什么？
+### freecache是什么？
 
-#### 为什么选择freecache？
+使用FreeCache，您可以在内存中缓存无限数量的对象，而不会增加延迟和降低吞吐量。
+
+### 为什么选择freecache？
 
 * 支持存储大量数据条目
 * **零 GC**
@@ -20,7 +20,18 @@ Go缓存库，具有零GC开销和高并发性能
 * 严格的内存使用
 * 迭代器支持
 
-### Example
+### 性能如何
+
+下面基准测试与内置Map的比较结果，“Set”性能比内置Map快约2倍，“Get”性能比内置Map慢约1/2倍。 由于它是单线程基准测试，因此在多线程环境中，FreeCache应该比单锁保护的内置Map快许多倍。
+```bash
+    BenchmarkCacheSet        3000000               446 ns/op
+    BenchmarkMapSet          2000000               861 ns/op
+    BenchmarkCacheGet        3000000               517 ns/op
+    BenchmarkMapGet         10000000               212 ns/op
+```
+
+
+## Example
 
 ```golang
 package main
@@ -58,7 +69,7 @@ func main() {
 freecache 有几个特点：**零 GC**，**接近LRU**的淘汰算法，迭代器支持
 我们将从源码分析、核心的存储结构来分析他是怎么实现的
 
-### 核心的存储结构
+## 核心的存储结构
 
 ```golang
 package freecache
@@ -118,16 +129,16 @@ type entryHdr struct {
 * freecache 减少了指针的使用，所以freecache的对GC开销几乎为零。
 
 
-#### 结构图
+### 结构图
 
 ![img_1.png](img/freecache_img_1.png)
 
 
-### 流程分析
+## 流程分析
 
 流程分析只分析了了Set和淘汰算法的实现
 
-#### Set
+### Set
 
 1. Set数据是会先计算出Key对应的hash值，这个数据会在后面计算segID和slotId使用到
 2. 做一些数据合法的判断
@@ -139,10 +150,10 @@ type entryHdr struct {
 
    ![img_2.png](img/freecache_img_2.png)
 
-#### 淘汰算法的实现
+### 淘汰算法的实现
 freecache 的淘汰算法有两种实现：过期删除、**接近LRU**的淘汰算法
 
-##### 过期删除
+#### 过期删除
 
 freecache的过期删除并不是有一个后台协程去删除，而是在Get的时候才会判断，这样可以减少锁的抢占
 
@@ -158,7 +169,7 @@ if hdr.expireAt != 0 && hdr.expireAt <= now {
 }
 ```
 
-#### **接近LRU**的淘汰算法
+### **接近LRU**的淘汰算法
 
 ```golang
 package freecache
@@ -189,13 +200,13 @@ if expired {
   当一个entry的accessTime小于等于这个平均值，则认为这个entry是可以被置换掉的。
   
 
-### Doc
+## Doc
 
 http://godoc.org/github.com/coocood/freecache
 
-### 比较
+## 比较
 
-#### 相似的库
+### 相似的库
 
 * https://github.com/golang/groupcache
 * https://github.com/allegro/bigcache
