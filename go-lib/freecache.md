@@ -199,7 +199,6 @@ http://godoc.org/github.com/coocood/freecache
 
 * https://github.com/golang/groupcache
 * https://github.com/allegro/bigcache
-* https://github.com/coocood/freecache
 
 
 [1]: https://github.com/coocood/freecache
