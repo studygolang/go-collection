@@ -16,9 +16,13 @@ go get gopkg.in/asaskevich/govalidator.v10
 
 ### 开启此功能，默认情况下会校验所有字段
 
-`SetFieldsRequiredByDefault`当结构体中的字段不包括valid或未明确标记为忽略（即使用`valid:"-"`或`valid:"email,optional"`）都会导致校验失败，可以在一个包的 init 方法或main()方法开启此功能。
+`SetFieldsRequiredByDefault`
 
-`SetNilPtrAllowedByRequired` 当`required`标记的结构字段设置为零，会校验通过。默认情况下，为了保持一致性，会禁用此功能，但是一些需要能够确定`nil`值和`zero value`状态之间的包可以使用。如果禁用的话，`nil`值和`zero`值都会导致校验失败。
+当结构体中的字段不包括valid或未明确标记为忽略（即使用`valid:"-"`或`valid:"email,optional"`）都会导致校验失败，另外开启此功能的话可以把它放在一个包的 init() 方法或main()方法。
+
+`SetNilPtrAllowedByRequired` 
+
+允许结构体中`required`标记的字段为nil。默认情况下，为了保持一致性，会禁用此功能。但是一些在`nil`值和`zero value`中间状态的值的包是可以使用的。如果禁用的话，`nil`值和`zero`值都会校验失败。
 
 ```go
 import "github.com/asaskevich/govalidator"
@@ -331,7 +335,7 @@ _ = govalidator.Count(data, fn) // result = 5
 
 #### 校验struct
 
-如果要校验structs，你可以在struct的任何字段中使用`valid` tag。使用此字段的所有validator(validator)在一个tag中均按逗号进行分隔。如果你想跳过校验，请将`-`放在你的tag中。如果不需要下面列表中的validator，可以这样添加：
+如果要校验structs，你可以在struct的任何字段中使用`valid` tag。使用此字段的所有validator在一个tag中均按逗号进行分隔。如果你想跳过校验，请将`-`放在你的tag中。如果下面列表中没有你需要的validator，你可以按下面例子添加：
 
 ```go
 govalidator.TagMap["duck"] = govalidator.Validator(func(str string) bool {
@@ -341,7 +345,7 @@ govalidator.TagMap["duck"] = govalidator.Validator(func(str string) bool {
 
 有关完全自定义validator（基于接口），请参阅下文。
 
-以下是结构字段可用validator列表（validator - 使用功能）：
+下面是在结构体字段中的可以使用的validator列表（validator - 使用方法）：
 
 ```go
 "email":              IsEmail,
@@ -448,7 +452,7 @@ println(result)
 
 #### 校验Map
 
-如果你想要校验Map，可以使用需要校验的Map和包含校验结构中使用的相同标记的校验Map，两个Map都必须是`map[string]interface{}的类型
+如果你想要校验Map，可以用需要校验的Map和包含在ValidateStruct使用的相同Tag的校验Map，并且两个Map必须是`map[string]interface{}`的类型
 
 下面是使用的小例子：
 
@@ -492,7 +496,7 @@ println(govalidator.WhiteList("a3a43a5a4a3a2a23a4a5a4a3a4", "a-z") == "aaaaaaaaa
 
 #### 自定义校验函数
 
-允许使用自定义的特定域的validators - 例子如下：
+允许使用你自定义特定域的validators - 例子如下：
 
 ```go
 import "github.com/asaskevich/govalidator"
@@ -565,4 +569,5 @@ type Ticket struct {
 | https://github.com/gookit/validate         | Go通用的数据验证与过滤库，使用简单，内置大部分常用验证、过滤器，支持自定义验证器、自定义消息、字段翻译。咱国人开发的。文档可参考 https://github.com/gookit/validate/blob/master/README.zh-CN.md | 500    |
 | https://github.com/go-ozzo/ozzo-validation | 一个常用的Go验证包。支持使用普通语言构造而不是容易出错的struct标记的可配置和可扩展的验证规则的校验库。 | 2.1k   |
 | https://github.com/go-playground/validator | Go 结构体和字段校验库, 包括跨字段, 跨Struct, Map, Slice和Array。另外gin也默认支持。可参考大俊大佬[Go 每日一库之 validator](https://mp.weixin.qq.com/s/_cqeNbKeNayW0dHx6ROaNA) | 7.8k   |
-| https://github.com/asaskevich/govalidator  | 一个用于字符串(strings)、结构体(structs)和(collections)一些集合的校验(validator)和过滤库。 | 4.7k   |
+| https://github.com/asaskevich/govalidator  | 一个用于字符串、数字、切片和结构体的校验库和过滤库。基于[validator.js](https://github.com/chriso/validator.js)。 | 4.7k   |
+
