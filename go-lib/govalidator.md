@@ -1,4 +1,4 @@
-一个用于字符串(strings)、结构体(structs)和(collections)一些集合的校验(validator)和过滤库。基于[validator.js](https://github.com/chriso/validator.js)。
+一个用于字符串、数字、切片和结构体的校验库和过滤库。基于[validator.js](https://github.com/chriso/validator.js)。
 
 ### 安装
 
@@ -14,11 +14,9 @@ go get github.com/asaskevich/govalidator
 go get gopkg.in/asaskevich/govalidator.v10
 ```
 
-该包已准备就绪，可以使用。
+### 开启此功能，默认情况下会校验所有字段
 
-### 开启此功能，默认情况下所有字段都是需要被校验的
-
-`SetFieldsRequiredByDefault`当结构体中的字段不包括校验或未明确标记为忽略（即使用`valid:"-"`或`valid:"email,optional"`）会导致校验失败时，可以在一个包的 init 方法或main()方法开启此功能。
+`SetFieldsRequiredByDefault`当结构体中的字段不包括valid或未明确标记为忽略（即使用`valid:"-"`或`valid:"email,optional"`）都会导致校验失败，可以在一个包的 init 方法或main()方法开启此功能。
 
 `SetNilPtrAllowedByRequired` 当`required`标记的结构字段设置为零，会校验通过。默认情况下，为了保持一致性，会禁用此功能，但是一些需要能够确定`nil`值和`zero value`状态之间的包可以使用。如果禁用的话，`nil`值和`zero`值都会导致校验失败。
 
@@ -86,7 +84,7 @@ govalidator.CustomTypeTagMap.Set("customByteArrayValidator", func(i interface{},
 })
 ```
 
-### 函数列表：
+### 函数列表
 
 ```go
 func Abs(value float64) float64
@@ -400,13 +398,13 @@ govalidator.TagMap["duck"] = govalidator.Validator(func(str string) bool {
 "ulid":               IsULID,
 ```
 
-具有参数的validator
+带参数的validator
 
 ```go
 "range(min|max)": Range,"length(min|max)": ByteLength,"runelength(min|max)": RuneLength,"stringlength(min|max)": StringLength,"matches(pattern)": StringMatches,"in(string1|string2|...|stringN)": IsIn,"rsapub(keylength)" : IsRsaPub,"minstringlength(int): MinStringLength,"maxstringlength(int): MaxStringLength,
 ```
 
-具有任何类型参数的validator
+带任何类型参数的validator
 
 ```go
 "type(type)": IsType,
