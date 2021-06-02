@@ -6,9 +6,15 @@
 
 ### zap 是什么?
 
-uber 开源的工具，提供快速，结构化，高性能的日志记录。
+[⚡ZAP](https://github.com/uber-go/zap) 是uber 开源的提供快速，结构化，高性能的日志记录包。
 
 ### zap 高性能体现在哪里?
+
+在介绍zap包的优化部分之前，让我们看下zap日志库的工作流程图
+
+![img](https://cdn-images-1.medium.com/max/644/1*4mn192sJdR0rU8RQ3aQo4w.png)
+
+
 
 大多数日志库提供的方式是基于反射的序列化和字符串格式化，这种方式代价高昂，而 Zap 采取不同的方法。
 
@@ -724,7 +730,7 @@ https://pkg.go.dev/go.uber.org/zap
 
 #### 为什么我的一些日志会丢失？
 
-在启用抽样时，通过zap有意地删除日志。生产配置(如NewProductionConfig()返回的那样)支持抽样，这将导致在一秒钟内对重复日志进行抽样。有关为什么启用抽样的更多详细信息，请参见["为什么使用示例应用日志"中启用采样](https%3a%2f%2fgithub.com%2fuber-go%2fzap%2fblob%2fmaster%2fFAQ.md%23why-sample-application-logs).
+在启用抽样时，通过zap有意地删除日志。生产配置(如NewProductionConfig()返回的那样)支持抽样，这将导致在一秒钟内对重复日志进行抽样。有关为什么启用抽样的更多详细信息，请参见["为什么使用示例应用日志"中启用采样](https://github.com/uber-go/zap/blob/master/FAQ.md#why-sample-application-logs).
 
 #### 为什么要使用示例应用程序日志？
 
@@ -780,7 +786,7 @@ Zap 的源代码托管在 GitHub 上，但  [import path](https://golang.org/cmd
 
 Zap 不支持切割日志文件，因为我们更喜欢将此交给外部程序，如`logrotate`.
 
-但是，日志切割包很容易集成，如[`gopkg.in/natefinch/lumberjack.v2`](https://www.translatoruser-int.com/translate?&to=zh-Hans&csId=b3fae7f2-d2b0-4ccc-adf5-fea7ad40b1af&usId=1168fc7e-f5c4-4357-8e0d-549e1ce877ab&dl=en&ref=_ct&ac=true&dt=2021%2f5%2f15 13%3a46&h=TN1D4Qe7XppcUEm4xdQfowhjtl0zHOet&a=https%3a%2f%2fgodoc.org%2fgopkg.in%2fnatefinch%2flumberjack.v2)作为`zapcore.WriteSyncer`.
+但是，日志切割包很容易集成，如  [`gopkg.in/natefinch/lumberjack.v2`](https://godoc.org/gopkg.in/natefinch/lumberjack.v2) 作为`zapcore.WriteSyncer`.
 
 ```go
 // lumberjack.Logger is already safe for concurrent use, so we don't need to
@@ -812,9 +818,9 @@ logger := zap.New(core)
 | `github.com/blendle/zapdriver` | Stackdriver    |
 | `github.com/moul/zapgorm`      | Gorm           |
 
-### 比较
+### 性能比较
 
-> 说明 : 以下资料来源于 zap 官方
+> 说明 : 以下资料来源于 zap 官方，Zap 提供的基准测试清楚地表明，[zerolog](https://github.com/rs/zerolog)是与 Zap 竞争最激烈的。zerolo还提供结果非常相似的[基准测试](https://github.com/rs/zerolog#benchmarks)：
 
 记录一个10个kv字段的消息：
 
@@ -828,7 +834,7 @@ logger := zap.New(core)
 | logrus          | 29501 ns/op | +3322%        | 125 allocs/op     |
 | log15           | 29906 ns/op | +3369%        | 122 allocs/op     |
 
-使用一个已经有10个k-v字段的logger记录一条消息：
+使用一个已经有10个kv字段的logger记录一条消息：
 
 | Package         | Time        | Time % to zap | Objects Allocated |
 | --------------- | ----------- | ------------- | ----------------- |
@@ -840,7 +846,7 @@ logger := zap.New(core)
 | apex/log        | 26012 ns/op | +20544%       | 104 allocs/op     |
 | logrus          | 27236 ns/op | +21516%       | 113 allocs/op     |
 
-记录一个字符串，没有字段或格式化样式的模板：
+记录一个字符串，没有字段或`printf`风格的模板：
 
 | Package          | Time       | Time % to zap | Objects Allocated |
 | ---------------- | ---------- | ------------- | ----------------- |
