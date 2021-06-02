@@ -16,7 +16,7 @@ uber 开源的工具，提供快速，结构化，高性能的日志记录。
 
 封装强类型，无反射
 
-使用零分配内存的 JSON 编码器，尽可能避免序列化开销，它比其他结构化日志记录包快 4 - 10 倍。
+使用零分配内存的 JSON 编码器，尽可能避免序列化开销，它比其他结构化日志包快 4 - 10 倍。
 
 ```go
 logger.Info("failed to fetch URL",
@@ -45,7 +45,7 @@ Zap 提供了两种类型的 logger
 + SugaredLogger
 + Logger
 
-在**性能良好但不是关键**的上下文中，使用 **SugaredLogger**，它比其他日志记录包快 4-10 倍，并且支持结构化和 `printf` 风格的日志记录。
+在**性能良好但不是关键**的情况下，使用 **SugaredLogger**，它比其他结构化的日志包快 4-10 倍，包括结构化和 `printf` 风格的APIs。
 
 > 例一 调用 NewProduction 创建日志
 
@@ -60,7 +60,7 @@ func TestSugar(t *testing.T) {
 }
 ```
 
-对**每一次内存分配都很重要**的上下文中，使用 **Logger** ，它甚至比前者更快，内存分配次数也更少，但它仅支持强类型的结构化日志记录。
+对**性能和类型安全要求严格**的上下文中，可以使用 **Logger** ，它甚至比前者**SugaredLogger**更快，内存分配次数也更少，但它仅支持强类型的结构化日志记录。
 
 > 例二 调用 NewDevelopment 创建日志
 
@@ -136,19 +136,19 @@ func main() {
 	logger := zap.New(core, zap.AddCaller(), zap.Development())
 	defer logger.Sync()
   
-  // 配置 zap 包的全局变量
-  zap.ReplaceGlobals(logger)	
-  
-	// 运行时安全地更改 logger 日记级别
-	atom.SetLevel(zap.InfoLevel)
-	sugar := logger.Sugar()
-  // 问题 1: debug 级别的日志打印到控制台了吗?
-	sugar.Debug("debug")
-	sugar.Info("info")
-	sugar.Warn("warn")
-	sugar.DPanic("dPanic")
-  // 问题 2: 最后的 error 会打印到控制台吗?
-	sugar.Error("error")
+	  // 配置 zap 包的全局变量
+	  zap.ReplaceGlobals(logger)	
+
+		// 运行时安全地更改 logger 日记级别
+		atom.SetLevel(zap.InfoLevel)
+		sugar := logger.Sugar()
+	  // 问题 1: debug 级别的日志打印到控制台了吗?
+		sugar.Debug("debug")
+		sugar.Info("info")
+		sugar.Warn("warn")
+		sugar.DPanic("dPanic")
+	  // 问题 2: 最后的 error 会打印到控制台吗?
+		sugar.Error("error")
 }
 ```
 
