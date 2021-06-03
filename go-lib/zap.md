@@ -51,7 +51,7 @@ Zap 提供了两种类型的 logger
 
 在**性能良好但不是关键**的情况下，使用 **SugaredLogger**，它比其他结构化的日志包快 4-10 倍，并且支持结构化和 `printf` 风格的APIs。
 
-### 例一 调用 NewProduction 创建logger对象
+### <a id="example_1">例一 </a>调用 NewProduction 创建logger对象
 
 ```go
 func TestSugar(t *testing.T) {
@@ -66,7 +66,7 @@ func TestSugar(t *testing.T) {
 
 对**性能和类型安全要求严格**的情况下，可以使用 **Logger** ，它甚至比前者**SugaredLogger**更快，内存分配次数也更少，但它仅支持强类型的结构化日志记录。
 
-### 例二 调用 NewDevelopment 创建logger对象
+### <a name="example_2">例二</a> 调用 NewDevelopment 创建logger对象
 
 ```go
 func TestLogger(t *testing.T) {
@@ -96,7 +96,7 @@ sugar := logger.Sugar()
 plain := sugar.Desugar()
 ```
 
-### 例四 自定义格式
+### <a name="example_4">例四</a> 自定义格式
 
 自定义一个日志消息格式，带着问题看下列代码。
 
@@ -374,7 +374,7 @@ func NewProductionEncoderConfig() zapcore.EncoderConfig {
 }
 ```
 
-该配置会输出如下结果，此结果出处参见 **Example** 中的例一
+该配置会输出如下结果，此结果出处参见 **Example** 中的[例一](#example_1)
 
 ```bash
 {"level":"info","ts":1620367988.461055,"caller":"test/use_test.go:24","msg":"Failed to fetch URL: https://baidu.com"}
@@ -408,7 +408,7 @@ func NewDevelopmentEncoderConfig() zapcore.EncoderConfig {
 }
 ```
 
-该配置会输出如下结果，此结果出处参见 Example 中的例二
+该配置会输出如下结果，此结果出处参见 Example 中的 <a href="#example_2">例二</a> 
 
 ```bash
 2021-05-07T14:14:12.434+0800	INFO	test/use_test.go:31	failed to fetch URL	{"url": "https://baidu.com", "attempt": 3, "backoff": "1s"}
@@ -445,7 +445,7 @@ func (cfg Config) Build(opts ...Option) (*Logger, error) {
 }
 ```
 
-从上面的代码中，通过解析 config 的参数，调用 `New` 方法来创建 Logger。在 **Example** 中例四，就是调用 `New` 方法来自定义 Logger。
+从上面的代码中，通过解析 config 的参数，调用 `New` 方法来创建 Logger。在 **Example** 中<a href="#example_4">例四</a>，就是调用 `New` 方法来自定义 Logger。
 
 #### SugaredLogger
 
@@ -824,7 +824,7 @@ logger := zap.New(core)
 
 记录一个10个kv字段的消息：
 
-| Package         | Time        | Time % to zap | Objects Allocated |
+| 库名             | 每次迭代耗时  | 耗时相比zap     | 每次迭代内存分配次数 |
 | --------------- | ----------- | ------------- | ----------------- |
 | ⚡ zap           | 862 ns/op   | +0%           | 5 allocs/op       |
 | ⚡ zap (sugared) | 1250 ns/op  | +45%          | 11 allocs/op      |
@@ -836,7 +836,7 @@ logger := zap.New(core)
 
 使用一个已经有10个kv字段的logger记录一条消息：
 
-| Package         | Time        | Time % to zap | Objects Allocated |
+| 库名             | 每次迭代耗时  | 耗时相比zap     | 每次迭代内存分配次数 |
 | --------------- | ----------- | ------------- | ----------------- |
 | ⚡ zap           | 126 ns/op   | +0%           | 0 allocs/op       |
 | ⚡ zap (sugared) | 187 ns/op   | +48%          | 2 allocs/op       |
@@ -848,7 +848,7 @@ logger := zap.New(core)
 
 记录一个字符串，没有字段或`printf`风格的模板：
 
-| Package          | Time       | Time % to zap | Objects Allocated |
+| 库名             | 每次迭代耗时  | 耗时相比zap     | 每次迭代内存分配次数 |
 | ---------------- | ---------- | ------------- | ----------------- |
 | ⚡ zap            | 118 ns/op  | +0%           | 0 allocs/op       |
 | ⚡ zap (sugared)  | 191 ns/op  | +62%          | 2 allocs/op       |
