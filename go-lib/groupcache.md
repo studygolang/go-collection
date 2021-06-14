@@ -8,8 +8,7 @@ groupcache 是一个分布式缓冲库
 
 ### groupcache是什么？
 
-* groupcache 是一个分布式缓冲库
-* 地址：github.com/golang/groupcache
+* [groupcache](github.com/golang/groupcache)是一个分布式缓冲库
 * 是Server又是 Client
 * 与其他peer相连
 * 热点缓存副本
