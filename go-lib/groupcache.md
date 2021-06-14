@@ -2,13 +2,13 @@
 
 ## 一句话描述
 
-groupcache 是一个分布式缓库
+groupcache 是一个分布式缓冲库
 
 ## 简介
 
 ### groupcache是什么？
 
-* groupcache 是一个分布式缓库
+* groupcache 是一个分布式缓冲库
 * 地址：github.com/golang/groupcache
 * 是Server又是 Client
 * 与其他peer相连
