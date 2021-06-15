@@ -119,7 +119,7 @@ Priority   Path             Handle
 
 ![httprouter简略图](./img/httprouter.png)
 
-## 底层数据机构
+## 底层数据结构
 
 ### 路由
 
