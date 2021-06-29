@@ -58,11 +58,10 @@ type GoError struct {
 
 如果必须保存多个error数据，则`causes`是一个数组类型，并将其设置为基本`error`类型，以便在程序中包含该原因的第三方错误。
 
-TODO
 
 ## 组件
 
-标记层组件将有助于识别错误发生在哪一层，并且可以避免不必要的错误包装。例如，如果`service`类型的错误组件发生在服务层，则可能不需要包装错误。检查组件信息将有助于防止暴露不应该通知用户的错误，比如数据库错误：
+标记层组件将有助于识别error发生在哪一层，并且可以避免不必要的error wrap。例如，如果`service`类型的error组件发生在服务层，则可能不需要wrap error。检查组件信息将有助于防止暴露给用户不应该通知的error，比如数据库error：
 
 ```go
 type GoError struct {
@@ -83,7 +82,7 @@ const (
 
 ## 响应类型
 
-添加错误响应类型将支持错误分类，以便于解释。例如，可以根据响应类型(如`NotFound`)对错误进行分类，像`DbRecordNotFound`、`ResourceNotFound`、`UserNotFound`等等的错误都可以归类为 `NotFound`错误。这在多层应用程序开发过程中非常有用，而且是可选的装饰：
+添加一个错误响应类型这样可以支持error分类，以便于了解什么错误。例如，可以根据响应类型(如`NotFound`)对error进行分类，像`DbRecordNotFound`、`ResourceNotFound`、`UserNotFound`等等的error都可以归类为 `NotFound` error。这在多层应用程序开发过程中非常有用，而且是可选的封装：
 
 ```go
 type GoError struct {
@@ -107,7 +106,7 @@ const (
 
 ## 重试
 
-在少数情况下，错误将被重试。retry字段可以通过设置`Retryable`标记来决定是否为错误重试:
+在少数情况下，出现error会进行重试。retry字段可以通过设置`Retryable`标记来决定是否要进行error重试:
 
 ```
 type GoError struct {
@@ -124,7 +123,7 @@ type GoError struct {
 
 ## GoError 接口
 
-通过定义一个带有`GoError`实现的显式错误接口，可以简化错误检查:
+通过定义一个带有`GoError`实现的显式error接口，可以简化error检查:
 
 ```go
 package goerr
@@ -147,9 +146,9 @@ type Error interface {
 }
 ```
 
-## 抽象错误
+## 抽象error
 
-有了上述的装饰方式，更重要的是对错误进行抽象，将这些装饰保存在同一地方，并提供错误函数的可重用性
+有了上述的封装方式，更重要的是对error进行抽象，将这些封装保存在同一地方，并提供error函数的可重用性
 
 ```go
 func ResourceNotFound(id, kind string, cause error) GoError {
@@ -165,7 +164,7 @@ func ResourceNotFound(id, kind string, cause error) GoError {
 }
 ```
 
-这个错误函数抽象了`ResourceNotFound`这个错误，开发者可以使用这个函数来返回错误对象而不是每次创建一个新的对象：
+这个error函数抽象了`ResourceNotFound`这个error，开发者可以使用这个函数来返回error对象而不是每次创建一个新的对象：
 
 ```go
 //UserServiceuser, err := u.repo.FindUser(ctx, userId)
@@ -179,7 +178,7 @@ if err != nil {
 
 ## 结论
 
-我们演示了如何使用添加上下文数据的自定义Go的错误类型，从而使得错误在多层应用程序中更有意义。你可以在[这里](https://gist.github.com/prathabk/744367cbfc70435c56956f650612d64b)看到完整的代码实现和定义。
+我们演示了如何使用添加上下文数据的自定义Go的error类型，从而使得error在多层应用程序中更有意义。你可以在[这里](https://gist.github.com/prathabk/744367cbfc70435c56956f650612d64b)看到完整的代码实现和定义。
 
 ## 原文链接
 
