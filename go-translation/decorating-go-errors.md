@@ -167,7 +167,9 @@ func ResourceNotFound(id, kind string, cause error) GoError {
 这个error函数抽象了`ResourceNotFound`这个error，开发者可以使用这个函数来返回error对象而不是每次创建一个新的对象：
 
 ```go
-//UserServiceuser, err := u.repo.FindUser(ctx, userId)
+//UserService
+
+user, err := u.repo.FindUser(ctx, userId)
 if err != nil {
    if err.ResponseType == NotFound {
       return ResourceNotFound(userUid, "User", err)
