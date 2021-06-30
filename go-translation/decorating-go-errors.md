@@ -59,7 +59,7 @@ type GoError struct {
 如果必须保存多个error数据，则`causes`是一个数组类型，并将其设置为基本`error`类型，以便在程序中包含该原因的第三方错误。
 
 
-## 组件
+## 组件(Component)
 
 标记层组件将有助于识别error发生在哪一层，并且可以避免不必要的error wrap。例如，如果`service`类型的error组件发生在服务层，则可能不需要wrap error。检查组件信息将有助于防止暴露给用户不应该通知的error，比如数据库error：
 
@@ -80,9 +80,9 @@ const (
 )
 ```
 
-## 响应类型
+## 响应类型(ResponseType)
 
-添加一个错误响应类型这样可以支持error分类，以便于了解什么错误。例如，可以根据响应类型(如`NotFound`)对error进行分类，像`DbRecordNotFound`、`ResourceNotFound`、`UserNotFound`等等的error都可以归类为 `NotFound` error。这在多层应用程序开发过程中非常有用，而且是可选的封装：
+添加一个错误响应类型这样可以支持error分类，以便于了解什么错误类型。例如，可以根据响应类型(如`NotFound`)对error进行分类，像`DbRecordNotFound`、`ResourceNotFound`、`UserNotFound`等等的error都可以归类为 `NotFound` error。这在多层应用程序开发过程中非常有用，而且是可选的封装：
 
 ```go
 type GoError struct {
