@@ -15,7 +15,7 @@ redis的作者Salvatore Sanfilippo提出了一种叫做Redlock的算法作为分
 
 ---
 
-让我们使用Redlock创建我们的分布式锁实现，在本文中，我们将会使用Go实现他。首先我们创建一个Locker接口来执行Lock和Unlock操作
+让我们使用Redlock实现分布式锁，在本文中，我们将会使用Go实现。首先我们创建一个Locker接口来执行**Lock**和**Unlock**操作
 
 ```go
 type Locker interface {
@@ -24,7 +24,7 @@ type Locker interface {
 }
 ```
 
-然后我们创建一些结构体来为Locker的实现保存配置
+然后我们创建一个struct来为Locker的实现保存一些配置。
 
 ```go
 type locker struct {
@@ -43,13 +43,13 @@ type locker struct {
 
 - **drift**：对redis客户过期的标记。
 
-- **quorum**：[quorum]([Quorum (distributed computing) - Wikipedia](https://en.wikipedia.org/wiki/Quorum_(distributed_computing))将被用于计算最多的失败次数。如果客户端获取说失败次数小于N/2+1，我们将会尝试解说所有示例的资源。N表示redis实例的数量。
+- **quorum**：[quorum]([Quorum (distributed computing) - Wikipedia](https://en.wikipedia.org/wiki/Quorum_(distributed_computing))将被用于计算最多的失败次数。如果客户端获取锁失败次数小于N/2+1，我们将会尝试解锁所有实例上的资源。N表示redis实例的数量。
 
-- **name**: name是用来作为redis 的键使用的，每个锁应该有唯一的name。
+- **name**: name是用来作为redis 的键使用的，每个锁应该有唯一的名称。
 
-- **value**: value是一个随机的字符串，因此只有当他仍然是试图移除lock的client所设置的value时，lock才会被移除。
+- **value**: value是一个随机的字符串，因此只有设置他的客户端才有权限对其进行解锁。
 
-  在获取lock的时候，我们需要在密匙不存在的情况下使用NX选项设置密匙。
+  在获取lock的时候，我们需要在key不存在的情况下使用NX选项设置key。
 
   ```go
   var scriptLock = `
@@ -89,7 +89,7 @@ type locker struct {
   }
   ```
 
-  如果密匙被成功设置并且设置成功时没有到过期时间，我们应该增加设置成功的计数。如果总的成功计数小于定义的quorum， 我们会调用unlock方法释放所有的lock。并且对于unlock方法的实现，我们知识简单地循环所有客户端，并对每一个客户端进行解锁。
+  如果key被成功设置并且设置成功时没有到过期时间，我们应该增加设置成功的计数。如果总的成功计数小于定义的quorum， 我们会调用unlock方法释放所有的锁。并且对于unlock方法的实现，我们只需简单地循环所有客户端，并对每一个客户端进行解锁就可以了。
 
   ```go
   var scriptUnlock = `
@@ -123,7 +123,7 @@ type locker struct {
   }
   ```
 
-  为了完成整个功能的实现，让我们创建一个结构来保存对out locker实现的连接以及构造
+  为了完成整个功能的实现，让我们创建一个结构来保存对out locker实现的连接以及构造函数
 
   ```go
   type DLM struct {
@@ -172,7 +172,7 @@ DLM结构将会保存Redis的连接， 我们将会将其作为单例实例。Ne
 
 ---
 
-现在让我们尝试我们的实现，我们将使用10s作为过期时间。我们将在执行某个进程后立即调用unlock（我们在进程中放置了1s睡眠）
+现在让我们来测试一下我们的实现，我们将使用10s作为过期时间。我们将在执行某个进程后立即调用unlock（我们在进程中放置了1s睡眠）
 
 ```go
 func main() {
@@ -205,7 +205,7 @@ func someOperation() {
 }
 ```
 
-下面是结果，我们能成功执行进程：
+下面是结果，我们成功地执行了该程序：
 
 ![](img/redlock_img_2.png)
 
@@ -246,3 +246,18 @@ func main() {
 我们刚刚使用redis为分布式锁实现了了Redlock算法，您可以在此[存储库]([go-exercise/src/etc/demo-redlock at master · syafdia/go-exercise (github.com)](https://github.com/syafdia/go-exercise/tree/master/src/etc/demo-redlock))中查看全部源码。
 
 多谢！
+
+[原文链接](https://syafdia.medium.com/implementing-redlock-on-redis-for-distributed-locks-a3cfe60d4ea4)
+
+参考:
+https://en.wikipedia.org/wiki/Mutual_exclusion
+
+https://www.educative.io/blog/multithreading-and-concurrency-fundamentals
+
+https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html
+
+https://redis.io/topics/distlock
+
+https://redislabs.com/redis-best-practices/communication-patterns/redlock/
+
+https://www.alibabacloud.com/blog/the-technical-practice-of-distributed-locks-in-a-storage-system_597141
