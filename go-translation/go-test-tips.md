@@ -18,13 +18,13 @@ func Add (argOne, argTwo int) int {
 
 考虑下这两个包：net/url包，提供了URL解析的功能；net/http包，提供了web服务和HTTP客户端的功能。如我们所料，上层的net/http包依赖下层的net/url包。然后，net/url包中的一个测试是演示不同URL和HTTP客户端的交互行为。也就是说，一个下层包的测试代码导入了上层的包。
 
-![ch11-01](D:\backup\桌面\ch11-01.png)
+![ch11-01](go-translation/img/ch11-01.png)
 
 如上图，这样的行为在net/url包的测试代码中会导致包的循环依赖，Go语言规范是禁止包的循环依赖的。
 
 不过我们可以通过在net/url包所在的目录声明一个独立的url_test测试包。其中包名的`_test`后缀告诉go test工具它应该建立一个额外的包来运行测试。我们可以将这个测试包的导入路径视作是net/url_test，这样会更容易理解。在设计层面，url_test测试包是在所有它依赖的包的上层，如下图。
 
-![ch11-02](D:\backup\桌面\ch11-02.png)
+![ch11-02](go-translation/img/ch11-02.png)
 
 通过避免循环的导入依赖，test测试包可以更灵活地编写测试，特别是集成测试（需要测试多个组件之间的交互），可以像普通应用程序那样自由地导入其他包，而不用担心循环依赖问题。
 
