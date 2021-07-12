@@ -6,23 +6,24 @@
 
 
 
-### 什么是 Zerolog ?
 
-zerolog 包提供了一个专门用于 JSON 输出的简单快速的记录器。
+## 什么是 Zerolog ?
 
-zerolog 的 API 旨在提供很棒的开发者体验和令人惊叹的性能。其独特的链式 API 允许通过避免分配和反射来写 JSON ( 或 CBOR ) 日志。
+zerolog 包提供了一个专门用于 JSON 输出的简单快速的Logger。
 
-uber 的 [zap](https://godoc.org/go.uber.org/zap) 库开创了这种方法，zerolog 将这一概念提升到了更高的层次，更易于使用的 API 和更好的性能。
+zerolog 的 API 旨在为开发者提供出色的体验和令人惊叹的[性能](https://github.com/rs/zerolog#benchmarks)。其独特的链式 API 允许通过避免内存分配和反射来写入 JSON ( 或 CBOR ) 日志。
 
-### 使用 zerolog
+uber 的 [zap](https://godoc.org/go.uber.org/zap) 库开创了这种方法，zerolog 通过更简单的应用编程接口和更好的性能，将这一概念提升到了更高的层次。
 
-#### 安装
+## 使用 zerolog
+
+### 安装
 
 ```bash
 go get -u github.com/rs/zerolog/log
 ```
 
-#### 上下文记录
+### Contextual Logger
 
 ```go
 func TestContextualLogger(t *testing.T) {
@@ -40,7 +41,6 @@ func TestContextualLogger(t *testing.T) {
 
 ```bash
 // {"level":"info","content":"Hello world","count":3,"message":"TestContextualLogger"}
-
 // {"level":"info","caller":"log_example_test.go:29","message":"Hello wrold"}
 ```
 
@@ -48,7 +48,7 @@ func TestContextualLogger(t *testing.T) {
 
 与 zap 不同的是，zerolog 采用链式调用。
 
-#### 分级记录
+### 多级Logger
 
 zerolog 提供了从 **Trace** 到  **Panic** 七个级别
 
@@ -71,34 +71,32 @@ zerolog 提供了从 **Trace** 到  **Panic** 七个级别
  {"message":"没有级别"}
 ```
 
-#### 注意事项
+### 注意事项
 
-+ zerolog 不会对重复的字段删除
+1.zerolog 不会对重复的字段删除
 
-  ```go
-  logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
-  logger.Info().
-         Timestamp().
-         Msg("dup")
-  ```
+```go
+logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
+logger.Info().
+       Timestamp().
+       Msg("dup")
+```
 
-  输出
+输出
 
-  ```bash
-  {"level":"info","time":1494567715,"time":1494567715,"message":"dup"}
-  ```
+```bash
+{"level":"info","time":1494567715,"time":1494567715,"message":"dup"}
+```
 
-+ 链式调用必须调用 **Msg** 或 **Msgf**，**Send** 才能输出日志，**Send** 相当于调用 **Msg("")**
+2.链式调用必须调用 **Msg** 或 **Msgf**，**Send** 才能输出日志，**Send** 相当于调用 **Msg("")**
 
-+ 一旦调用 **Msg** ，**Event** 将会被处理 ( 放回池中或丢掉 )，不允许二次调用。
+3.一旦调用 **Msg** ，**Event** 将会被处理 ( 放回池中或丢掉 )，不允许二次调用。
 
-  
+## 了解源码
 
-### 了解源码
+本次zerolog的源码分析基于 zerolog 1.22.0 版本，源码分析较长，希望大家耐心看完。希望大家能有所收获。
 
-基于 zerolog 1.22.0 版本
-
-#### 看一下 Logger 结构体
+### 看一下 Logger 结构体
 
 **Logger** 的参数 **w** 类型是 **LevelWriter** 接口，用于向目标输出事件。**zerolog.New** 函数用来创建 **Logger**，看下方源码。
 
@@ -129,7 +127,7 @@ func New(w io.Writer) Logger {
 }
 ```
 
-#### debug 了解输出日志流程
+### debug 了解输出日志流程
 
 ![image-20210615150059405](http://img.golang.space/shot-1623740459584.png)
 
@@ -196,7 +194,7 @@ func (l *Logger) should(lvl Level) bool {
 }
 ```
 
-**newEvent** 函数使用 **sync.Pool** 获取参数，并将 **Event** 参数初始化，赋值日志级别和写入对象。
+**newEvent** 函数使用 **sync.Pool** 获取Event对象，并将 **Event** 参数初始化：日志级别**level**和写入对象**LevelWriter**。
 
 ```go
 // ============ event.go ===
@@ -226,9 +224,7 @@ func newEvent(w LevelWriter, level Level) *Event {
 }
 ```
 
-
-
-**Str** 函数将键值对添加到 **buf**，字符串类型添加到 JSON 格式，涉及到特殊字符编码问题，如果是特殊字符，调用 **appendStringComplex** 函数解决。
+**Str** 函数是负责将键值对添加到 **buf**，字符串类型添加到 JSON 格式，涉及到特殊字符编码问题，如果是特殊字符，调用 **appendStringComplex** 函数解决。
 
 ```go
 // ============ event.go ===
@@ -272,9 +268,7 @@ func (Encoder) AppendString(dst []byte, s string) []byte {
 }
 ```
 
-
-
-**Int** 函数将键值对添加到 **buf**，内部调用 **strconv.AppendInt** 函数实现。
+**Int** 函数将键值(int类型)对添加到 **buf**，内部调用 **strconv.AppendInt** 函数实现。
 
 ```go
 // ============ event.go ===
@@ -299,7 +293,7 @@ func (Encoder) AppendInt(dst []byte, val int) []byte {
 ```go
 // === event.go ===
 
-// Msg 是对 msg 的封装调用，当指针接收器为 nil 结束
+// Msg 是对 msg 的封装调用，当指针接收器为 nil 返回
 func (e *Event) Msg(msg string) {
 	if e == nil {
 		return
@@ -358,15 +352,15 @@ func (lw levelWriterAdapter) WriteLevel(l Level, p []byte) (n int, err error) {
 }
 ```
 
-以上 debug 让我们对日志记录流程有了大概的认识，接下来扩充相关知识。
+以上 debug 让我们对日志记录流程有了大概的认识，接下来扩充一下相关知识。
 
-#### 从 zerolog 学习避免内存分配
+### 从 zerolog 学习避免内存分配
 
-每一条日志都会产生一个 ***Event** ，当多个 Goroutine 操作日志，导致创建的对象数目剧增，进而导致 GC 压力增大。形成 "并发大 - 占用内存大 - GC 缓慢 - 处理并发能力降低 - 并发更大" 这样的恶性循环。在这个时候，需要有一个对象池，程序不再自己单独创建对象，而是从对象池中获取。
+每一条日志都会产生一个 ***Event**对象 ，当多个 Goroutine 操作日志，导致创建的对象数目剧增，进而导致 GC 压力增大。形成 **"并发大 - 占用内存大 - GC 缓慢 - 处理并发能力降低 - 并发更大"** 这样的恶性循环。在这个时候，需要有一个对象池，程序不再自己单独创建对象，而是从对象池中获取。
 
 使用 `sync.Pool` 可以将暂时不用的对象缓存起来，下次需要的时候从池中取，不用再次经过内存分配。
 
-下面代码中 **putEvent** 函数，当对象中记录消息的 **buf** 不超过 64KiB 时，放回池中。这里有个链接，通过这个 issue 了解到使用动态增长的 buffer 会导致大量内存被固定，在活锁的情况下永远不会释放。
+下面代码中 **putEvent** 函数，当对象中记录消息的 **buf** 不超过 64KB 时，放回池中。这里有个链接，通过这个 [issue 23199](https://golang.org/issue/23199)了解到使用动态增长的 buffer 会导致大量内存被固定，在活锁的情况下永远不会释放。
 
 ```go
 var eventPool = &sync.Pool{
@@ -388,9 +382,9 @@ func putEvent(e *Event) {
 }
 ```
 
-#### 学习日志级别
+### 学习日志级别
 
-下方代码中，包含定义日志级别类型，级别对应的字符串值，获取字符串值的方法以及解析字符串为日志级别类型的方法。
+下面代码中，包含了日志级别类型的定义，日志级别对应的字符串值，获取字符串值的方法以及解析字符串为日志级别类型的方法。
 
 ```go
 // ============= log.go ===
@@ -486,7 +480,7 @@ var (
 
 **全局日志级别参数**
 
-这里使用 atomic 来保证原子操作，要么都执行，要么都不执行，外界不会看到只执行到一半的状态，原子操作由底层硬件支持，通常比锁更有效率。
+这里使用 **atomic** 来保证原子操作，要么都执行，要么都不执行，外界不会看到只执行到一半的状态，原子操作由底层硬件支持，通常比锁更有效率。
 
 **atomic.StoreInt32** 用于存储 **int32** 类型的值。
 
@@ -515,9 +509,9 @@ func GlobalLevel() Level {
 
 ```
 
-#### 学习如何实现 Hook
+### 学习如何实现 Hook
 
-首先定义 **Hook** 接口，内部有一个 **Run** 函数，入参包含 ***Event**，日志级别，消息 ( **Msg** 函数的参数 )。
+首先定义 **Hook** 接口，内部有一个 **Run** 函数，入参包含 ***Event**，日志级别**level和消息 ( **Msg** 函数的参数 )。
 
 然后定义了 **LevelHook** 结构体，用于为每个级别设置 **Hook 。**
 
@@ -528,7 +522,6 @@ func GlobalLevel() Level {
 type Hook interface {
 	Run(e *Event, level Level, message string)
 }
-
 
 // HookFunc 函数适配器
 type HookFunc func(e *Event, level Level, message string)
@@ -637,15 +630,15 @@ func (e *Event) msg(msg string) {
 }
 ```
 
-#### 学习如何得到调用者函数名
+### 学习如何得到调用者函数名
 
-在看 zerolog 源码之前，要有前置知识，关于 **runtime.Caller** 函数。
+在看 zerolog 源码之前，需要知道一些关于 **runtime.Caller** 函数的前置知识，
 
-**runtime.Caller** 报告有关调用 goroutine 堆栈上的函数调用的文件和行号信息。
+* **runtime.Caller** 可以获取相关调用 goroutine 堆栈上的函数调用的文件和行号信息。
 
-**参数 skip** 是堆栈帧的数量，当 skip=0 时，输出当前函数信息; 当 skip=1 时，输出调用栈上一帧，即调用函数者的信息。
+* 参数**skip** 是堆栈帧的数量，当 skip=0 时，输出当前函数信息; 当 skip=1 时，输出调用栈上一帧，即调用函数者的信息。
 
-**返回值**为 程序计数器，文件位置，行号，是否能恢复信息
+* **返回值**为 程序计数器，文件位置，行号，是否能恢复信息
 
 ```go
 // ============ go@1.16.5 runtime/extern.go ===
@@ -720,9 +713,9 @@ func (e *Event) caller(skip int) *Event {
 }
 ```
 
-#### 从日志采样学习 atomic
+### 从日志采样中学习 atomic
 
-这个使用案例中，**TestSample** 每秒允许 5 条消息，超过则每 20 条仅记录一条
+这个使用案例中，**TestSample** 每秒允许 记录5 条消息，超过则每 20 条仅记录一条
 
 ```go
 func TestSample(t *testing.T) {
@@ -737,9 +730,7 @@ func TestSample(t *testing.T) {
 }
 ```
 
-输出结果
-
-本来应该输出 50 条日志，使用了采样，在一秒内输出最大 5 条日志，当大于 5 条后，每 20 条日志输出一次。
+**输出结果**本来应该输出 50 条日志，使用了采样，在一秒内输出最大 5 条日志，当大于 5 条后，每 20 条日志输出一次。
 
 ![image-20210618114636900](http://img.golang.space/shot-1623987997133.png)
 
@@ -759,8 +750,6 @@ type Sampler interface {
 	// 如果事件是样本的一部分返回 true
 	Sample(lvl Level) bool
 }
-
-
 
 // BasicSampler 基本采样器
 // 每 N 个事件发送一次，不考虑日志级别
@@ -854,15 +843,13 @@ func (l *Logger) should(lvl Level) bool {
 }
 ```
 
+## Doc
 
+关于更多zerolog的使用可以参考 https://pkg.go.dev/github.com/rs/zerolog
 
-### Doc
+## 比较
 
-https://pkg.go.dev/github.com/rs/zerolog
-
-### 比较
-
-> 说明 : 以下资料来源于 zerolog 官方。
+> 说明 : 以下资料来源于 zerolog 官方。从性能分析上zerolog比zap和其他logger库更胜一筹，关于zerolog和zap的使用，gopher可根据实际业务场景具体考量。
 
 记录 10 个 KV 字段的消息 : 
 
@@ -910,6 +897,6 @@ https://pkg.go.dev/github.com/rs/zerolog
 
 [zap](https://github.com/uber-go/zap) 非常快速，结构化，分级
 
-### 参考资料
+## 参考资料
 
 [zerolog 官方文档](https://pkg.go.dev/github.com/rs/zerolog)
