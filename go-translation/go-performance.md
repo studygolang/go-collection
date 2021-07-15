@@ -312,7 +312,7 @@ var hashPool = sync.Pool{
 
 现在我们更新一下代码，将以下内容添加到`foo`中：
 
-```golan
+```golang
 // get buffer from pool
 bufptr := bufPool.Get().(*[]byte)
 defer bufPool.Put(bufptr)
@@ -326,7 +326,7 @@ defer hashPool.Put(h)
 h.Reset()
 ```
 
-我们用来`sync.Pool.Get`从池中检索一个对象，当函数返回时使用`sync.Pool.Put`将它放回池中。由于我们现在有一个 hasher 对象，所以我们可以直接向它写入而不是中间缓冲区。理想情况下，我们可以做类似的事情
+我们用来`sync.Pool.Get`从池中得到一个对象，当函数返回时使用`sync.Pool.Put`将它放回池中。由于我们现在有一个 hasher 对象，所以我们可以直接向它写入而不是中间缓冲区。理想情况下，我们可以做类似的事情
 
 ```golang
 x := strconv.Itoa(n)
@@ -337,7 +337,7 @@ for i := 0; i < 100000; i++ {
 
 不幸的是，Go 中的哈希对象没有 WriteString 方法，因此我们需要使用它`strconv.AppendInt`来获取字节切片。此外，使用 AppendInt 减少了内存分配，因为它写入的缓冲区buf是从`bufPool`中获取的而不是一个新分配的字符串，例如`strconv.Itoa`
 
-```goland
+```golang
 x := strconv.AppendInt(buf, int64(n), 10)
 for i := 0; i < 100000; i++ {
     h.Write(x)
@@ -346,36 +346,36 @@ for i := 0; i < 100000; i++ {
 
 现在我们可以获取哈希并将其放入`buf`中：
 
-```goland
+```golang
 // reset whatever strconv.AppendInt put in the buf
 buf = buf[:0]
 sum := h.Sum(buf)
 ```
 
-在下一个 for 循环中，我们从 0 迭代到`sum[0]`，执行一些计算，并将结果放入`b`。由于`sum[0]`永远不会超过 256，因为 a 的`byte`范围是 0-255，我们可以简单地说
+在下一个 for 循环中，我们从 0 迭代到`sum[0]`，执行一些计算，并将结果放入`b`中。由于`sum[0]`永远不会超过 256（`byte`范围是 0-255)，我们可以简单地说
 
 ```golang
 b := make([]byte, 0, 256)
 ```
 
-并保持循环内容相同。编译器可以在编译时用 256 推理，但不能用`sum[0]`. 这为我们节省了另一个分配。<BR>
+并保持循环内容不变。编译器可以在编译时用 256 推理，但不能用`sum[0]`. 这为我们减少了一次内存分配。
 
-我们终于减少到 1 个分配。将最终的 return 语句替换为以下内容：<BR>
+终于我们优化减少到 1 个分配。将最终的 return 语句替换为以下内容
 
-```goland
+```golang
 sum = sum[:0] // reset sum
 sum = append(sum, b...)
 return *(*string)(unsafe.Pointer(&sum))
 ```
 
-你应该看到
+你会看到
 
 ```
 Test PASS
 Allocs: 0
 ```
 
-为什么这样做？好吧，使用详细的逃逸分析信息构建我们最初拥有的内容可能会有所帮助：
+为什么这样做？下面我们使用详细的逃逸分析信息来编译我们最初的内容，可能会有所帮助：
 
 ```goland
 $ go build -gcflags='-m -m' a.go
@@ -393,7 +393,7 @@ $ go build -gcflags='-m -m' a.go
 ...
 ```
 
-新代码的输出：
+新代码的输出如下：
 
 ```
 ...
@@ -401,27 +401,27 @@ $ go build -gcflags='-m -m' a.go
 ...
 ```
 
-如果我们将切片保留在函数中并且不返回它，它将被堆栈分配。任何 C 程序员都知道，不可能返回堆栈分配的内存。当 Go 编译器看到 return 语句时，它会改为分配切片堆。但这并不能真正解释为什么将内容传输到`sum`不分配。`sum`堆不是也分配了吗？是的，但`sync.Pool`已经为我们执行了堆分配。
+如果我们将切片保留在函数中并且不返回它，它将被在栈上分配。任何 C 程序员都知道，分配在栈上的内存是不可能返回的。当 Go 编译器看到 return 语句时，切片会改为在堆上分配。但这并不能真正解释为什么将内容传输到`sum`不分配。`sum`不是也在堆上分配了吗？是的，但`sync.Pool`已经为我们在堆上分配了。
 
-## 外卖/小贴士
+## 小结
 
 * `unsafe` 转换字符串/字节切片的技巧
    * 字符串 -> 字节切片： `*(*[]byte)(unsafe.Pointer(&s))`
        * 缓冲区不能修改，否则会panic！
    * 字节切片 -> 字符串： `*(*string)(unsafe.Pointer(&buf))`
-* 如果不依赖于循环中更新的状态，则不要在循环中运行分配繁重的代码       
-* 使用`sync.Pool`大分配的对象时
-   * 对于字节切片，[bytebufferpool](https://github.com/valyala/bytebufferpool) 可能更容易实现且性能更高
-* 如果可以，请重用缓冲区
+* 如果不依赖于循环中更新的状态，则不要在循环中运行该代码       
+* 使用`sync.Pool`处理大的分配对象时
+   * 对于字节切片，[bytebufferpool](https://github.com/valyala/bytebufferpool) 可能更容易实现且拥有更高的性能
+* 如果可以，尽量重用缓冲区
    * 重置缓冲区
        * `bytes.Buffer.Reset`
        * `buf = buf[:0]`
-* 更喜欢最初分配固定大小的数组，而不是不指定大小并将其留给 [调整大小因子](https://forum.golangbridge.org/t/slice-append-what-is-the-actual-resize-factor/15654)
-* 确保实际 [对](https://golang.org/pkg/testing/#hdr-Benchmarks) 您的代码进行 [基准测试](https://chris124567.github.io/2021-06-21-go-performance/) ，以查看更改是否可以提高性能/权衡可读性问题
+* 优先选择初始分配固定大小的数组，而不是不指定大小并将其留给 [增长因子](https://forum.golangbridge.org/t/slice-append-what-is-the-actual-resize-factor/15654)
+* 确保实际 [对](https://golang.org/pkg/testing/#hdr-Benchmarks) 您的代码进行 [基准测试](https://chris124567.github.io/2021-06-21-go-performance/) ，看看更改是否可以提高性能/权衡可读性问题
           
 ## 结论
 
-性能确实很重要，而且并不总是很难改进。虽然这段代码有点人为，但可以从提高其性能中吸取一些教训。
+性能确实是很重要的，但是并不总是很难改进。尽管这段代码有点人为，但可以从改进其性能的过程中吸取一些教训。
 
 ## 原文链接
 
