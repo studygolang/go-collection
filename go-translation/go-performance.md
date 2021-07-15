@@ -292,9 +292,9 @@ sum := sha256.Sum256(buf)
 【todo】
 [注意：以下部分与 Knuth描述的内容很相近。它主要是为了展示sync.Pool。然而，值得注意的是，虽然 3 次分配和 0 次分配之间的差异可能看起来不大，但实际上可能是因为这意味着不用GC（至少作为此函数的结果） .]
 
-`sync.Pool`是 Go 中能分摊内存分配成本的一个特性。对于当前的代码，当我们分配缓冲区时，我们会在`foo`函数的生命周期内这样做。但是，如果我们能够分配一次，将其存储在一个全局变量中，然后无限地重用它（每次重置内容同时保持容量）呢？手动执行此操作可能会有点复杂，也不会同时工作。`sync.Pool`就是为了。`sync.Pool`允许您`Get`分配一个已分配的对象，`Put`并在您完成后返回。如果池中没有可用的对象并且您请求一个，它将调用`New`您定义的函数来分配一个。让我们为哈希对象创建一个池，为哈希总和（256 字节切片）创建一个池。把下面的放在上面`foo`：
+`sync.Pool`是 Go 中能分摊内存分配成本的一个特性。对于当前的代码，当我们分配缓冲区时，我们会在`foo`函数的生命周期内这样做。但是，如果我们能够分配一次，将其存储在一个全局变量中，然后无限地重用它（每次重置内容同时会保持容量）呢？手动执行此操作可能会有点复杂，也不会同时起作用。`sync.Pool`因此而生。`sync.Pool`允许您`Get`一个已分配的对象，`Put`并在用完之后放回去。如果池中没有可用的对象且如果你再请求`Get`一个，它会调用`New`函数来分配一个。接下来我们为哈希对象和哈希总和（256 字节切片）各创建一个对象池。放在上面的`foo`中：
 
-```goland
+```golang
 var bufPool = sync.Pool{
     New: func() interface{} {
         // length of a sha256 hash
@@ -310,9 +310,9 @@ var hashPool = sync.Pool{
 }
 ```
 
-现在我们需要更新我们的代码以使用这些而不是我们在函数中创建的那些。将以下内容添加到 的顶部`foo`：
+现在我们更新一下代码，将以下内容添加到`foo`中：
 
-```goland
+```golan
 // get buffer from pool
 bufptr := bufPool.Get().(*[]byte)
 defer bufPool.Put(bufptr)
@@ -326,16 +326,16 @@ defer hashPool.Put(h)
 h.Reset()
 ```
 
-我们用来`sync.Pool.Get`从池中检索一个对象，我们（当函数返回时）将它放回池中`sync.Pool.Put`。由于我们现在有一个 hasher 对象，我们可以直接写入它而不是中间缓冲区。理想情况下，我们可以做类似的事情
+我们用来`sync.Pool.Get`从池中检索一个对象，当函数返回时使用`sync.Pool.Put`将它放回池中。由于我们现在有一个 hasher 对象，所以我们可以直接向它写入而不是中间缓冲区。理想情况下，我们可以做类似的事情
 
-```goland
+```golang
 x := strconv.Itoa(n)
 for i := 0; i < 100000; i++ {
     h.Write(x)
 }
 ```
 
-不幸的是，Go 中的哈希对象没有 WriteString 方法，因此我们需要使用它`strconv.AppendInt`来获取字节切片。此外，使用 AppendInt 为我们节省了分配，因为它会写入我们从中获得的缓冲区，`bufPool`而不是分配一个新的字符串，例如`strconv.Itoa`
+不幸的是，Go 中的哈希对象没有 WriteString 方法，因此我们需要使用它`strconv.AppendInt`来获取字节切片。此外，使用 AppendInt 减少了内存分配，因为它写入的缓冲区buf是从`bufPool`中获取的而不是一个新分配的字符串，例如`strconv.Itoa`
 
 ```goland
 x := strconv.AppendInt(buf, int64(n), 10)
@@ -344,7 +344,7 @@ for i := 0; i < 100000; i++ {
 }
 ```
 
-现在我们可以获取哈希并将其放入`buf`：
+现在我们可以获取哈希并将其放入`buf`中：
 
 ```goland
 // reset whatever strconv.AppendInt put in the buf
@@ -354,7 +354,7 @@ sum := h.Sum(buf)
 
 在下一个 for 循环中，我们从 0 迭代到`sum[0]`，执行一些计算，并将结果放入`b`。由于`sum[0]`永远不会超过 256，因为 a 的`byte`范围是 0-255，我们可以简单地说
 
-```goland
+```golang
 b := make([]byte, 0, 256)
 ```
 
