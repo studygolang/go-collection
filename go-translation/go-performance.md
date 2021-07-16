@@ -134,7 +134,7 @@ Showing top 10 nodes out of 54
       40ms  1.72% 86.27%      760ms 32.62%  strconv.FormatInt
 ```
 
-[ 注意：本文中使用“分配”指的是 [堆分配 ](https://www.sciencedirect.com/topics/computer-science/heap-allocation) 。栈上分配也是分配，但在性能方面，它们并不是没有那么昂贵或重要。]
+[ 注意：本文中使用“分配”指的是 [堆分配](https://www.sciencedirect.com/topics/computer-science/heap-allocation) 。栈上分配也是分配，但在性能方面，它们并不是没有那么昂贵或重要。]
 
 看起来我们在使用 sha256、strconv、内存分配和垃圾回收方面花费了大量时间。现在我们知道需要改进什么。由于我们没有进行任何类型的复杂计算（可能除了 sha256），我们的大多数性能问题似乎都是由堆分配引起的。我们可以通过替换来精确地验证一下内存分配
 
@@ -417,7 +417,7 @@ $ go build -gcflags='-m -m' a.go
        * `bytes.Buffer.Reset`
        * `buf = buf[:0]`
 * 优先选择初始分配固定大小的数组，而不是不指定大小并将其留给 [增长因子](https://forum.golangbridge.org/t/slice-append-what-is-the-actual-resize-factor/15654)
-* 确保实际 [对](https://golang.org/pkg/testing/#hdr-Benchmarks) 您的代码进行 [基准测试](https://chris124567.github.io/2021-06-21-go-performance/) ，看看更改是否可以提高性能/权衡可读性问题
+* 确保实际情况下对自己的代码进行 [基准测试](https://golang.org/pkg/testing/#hdr-Benchmarks) ，看看更改是否可以提高性能/权衡可读性问题
           
 ## 结论
 
