@@ -6,9 +6,9 @@
 
 在 StackOverflow 和类似的论坛上有关性能的帖子中，会经常看到Knuth关于优化的一些名言：“过早的优化是万恶之源。” 这种简化忽略了[原文引用](chrome-extension://cdonnmffkdaoajfknoeeecmchibpmkmg/assets/pdf/web/viewer.html?file=https%3A%2F%2Fweb.archive.org%2Fweb%2F20210425190711if_%2Fhttps%3A%2F%2Fpic.plover.com%2Fknuth-GOTO.pdf)中一些重要的上下文：
 
->毫无疑问，追求效率会导致滥用。程序员浪费了大量时间来考虑或担心他们程序中非关键部分的速度，而在考虑调试和维护时，这些提高效率的尝试实际上会产生很大的负面影响。我们应该忘记那些低效率的，比如大约 97% 的时间：过早的优化是万恶之源。然而，我们不应该错过关键的 3% 的机会。一个优秀的程序员不会被这样的推理所迷惑，他会明智地仔细查看关键代码；但只有在代码被识别出来之后。
+> 由于程序员会过于追求效率导致浪费了大量时间来考虑或担心他们程序中非关键部分的速度，而在考虑调试和维护时，这些提高效率的尝试实际上会产生很大的负面影响。在97%的情况下，我们应该忽略一些小的效率优化：过早的优化是万恶之源。然而，我们不应该错过关键的 3% 的机会。一个优秀的程序员不会被这样的推理所迷惑，他会明智地仔细查看关键代码；但只有在代码被识别出来之后。
 
-Knuth 强调，与其寻找小的性能提升，损害可读性，甚至不值得，我们应该寻找通过改进关键代码寻找大的 (97%) 提升。我们如何识别关键代码？使用分析工具。庆幸的是，Go 拥有比大多数语言更好的分析工具。例如，假设我们有以下（有些人为故意的）代码：
+Knuth 强调，与其寻找小的性能提升，损害可读性，甚至不值得，我们应该寻找通过改进关键代码寻找大的 (97%) 提升。我们如何识别关键代码？使用分析工具。庆幸的是，Go 拥有比大多数语言更好的分析工具。例如，假设我们有以下（有些是刻意设计的）代码：
 
 ```golang
 package main
@@ -134,7 +134,7 @@ Showing top 10 nodes out of 54
       40ms  1.72% 86.27%      760ms 32.62%  strconv.FormatInt
 ```
 
-[ 注意：本文中使用“分配”指的是 [堆分配 ](https://www.sciencedirect.com/topics/computer-science/heap-allocation) 。堆栈分配也是分配，但在性能方面，它们并不是没有那么昂贵或重要。]
+[ 注意：本文中使用“分配”指的是 [堆分配 ](https://www.sciencedirect.com/topics/computer-science/heap-allocation) 。栈上分配也是分配，但在性能方面，它们并不是没有那么昂贵或重要。]
 
 看起来我们在使用 sha256、strconv、内存分配和垃圾回收方面花费了大量时间。现在我们知道需要改进什么。由于我们没有进行任何类型的复杂计算（可能除了 sha256），我们的大多数性能问题似乎都是由堆分配引起的。我们可以通过替换来精确地验证一下内存分配
 
@@ -208,9 +208,9 @@ func Sum256(data []byte) [Size]byte {
 }
 ```
 
-如果我们要使用该`New`函数创建一个新的哈希对象，似乎无论如何我们都必须这样做。如果有一种方法可以重用对象，也许这可能会很有用（剧透：有），但现在可能有更多低悬的果实可用【todo】。
+如果我们要使用该`New`函数创建一个新的哈希对象，似乎无论如何我们都必须这样做。如果有一种方法可以重用对象，也许这可能会很有用（提前剧透下：肯定有），但目前而言我们就有现成可用的。
 
-继续遍历
+接下来我们继续遍历
 
 ```golang
 var b []byte
@@ -223,8 +223,8 @@ for i := 0; i < int(sum[0]); i++ {
 
 我们可以看到内存分配可能发生在`b`附加到缓冲区和`strings.Repeat`调用时，因为这可能涉及某种类型的复制。`x`这一行绝对不会内存分配，因为它只是从数组中读取单个整数并对它们执行一些计算。让我们来看看是否可以对`strings.Repeat`进行优化. 这里主要是在重复一个常量，所以我们可以展开重复的字符串，比如：
 
-```
-    c := "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"[x]
+```golang
+c := "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"[x]
 ```
 
 但这感觉有点粗糙。如果有更简单的方法会怎么样呢？假设x等于 53。如果我们找到字符串的第 53 个字符，我们会看到它是 'a'。第 54 位是“b”。第 79、105、(1+26k)th 也是“a”。注意到这里的规律了吧？由于字母表中有 26 个字符，因此我们可以用x对26取模得到相同的结果。
@@ -242,7 +242,7 @@ Allocs: 23
 
 让我们回看一下字节切片`b`。开始是个空切片,append会分配新空间，所以这比最初仅分配一次要多。可以通过以下方式完成：
 
-```
+```golang
 b := make([]byte, 0, int(sum[0]))
 for i := 0; i < int(sum[0]); i++ {
     x := sum[(i*7+1)%len(sum)] ^ sum[(i*5+3)%len(sum)]
@@ -265,7 +265,7 @@ return *(*string)(unsafe.Pointer(&b))
 
 现在我们已经完成了对函数的初始化，接下来让我们再看看是否还有其他的内存分配可以优化。
 
-```
+```golang
 var buf bytes.Buffer
 x := strconv.Itoa(n)
 for i := 0; i < 100000; i++ {
@@ -377,7 +377,7 @@ Allocs: 0
 
 为什么这样做？下面我们使用详细的逃逸分析信息来编译我们最初的内容，可能会有所帮助：
 
-```goland
+```golang
 $ go build -gcflags='-m -m' a.go
 
 ...
@@ -421,7 +421,7 @@ $ go build -gcflags='-m -m' a.go
           
 ## 结论
 
-性能确实是很重要的，但是并不总是很难改进。尽管这段代码有点人为，但可以从改进其性能的过程中吸取一些教训。
+性能确实是很重要的，但是并不总是很难改进。尽管这段代码有点刻意人为，但可以从改进其性能的过程中吸取一些教训。
 
 ## 原文链接
 
