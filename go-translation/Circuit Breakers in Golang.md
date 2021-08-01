@@ -191,7 +191,7 @@ var downstreamErrCount int
 var circuitOpenErrCount int
 
 func main() {
-  downstreamErrCount = 0
+  	downstreamErrCount = 0
 	circuitOpenErrCount = 0
 	hystrix.ConfigureCommand("recommendation", hystrix.CommandConfig{
 		Timeout: 100,
@@ -220,7 +220,7 @@ func fetchMoviesFeedHandlerWithCircuitBreaker(w http.ResponseWriter, r *http.Req
 		output <- true
 		return nil
 	}, func(err error) error {
-    // 你的后备逻辑
+    	// 写你的fallback(回退)逻辑
 		return nil
 	})
 
