@@ -279,3 +279,4 @@ Dependency Inversion ( 与 SOLID 相同  ) 是依赖倒置的原则。依赖关�
 
 - [整洁架构之道](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [12 要素](https://12factor.net/ru/)
+- 
